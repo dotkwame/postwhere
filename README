@@ -9,6 +9,8 @@ The idea behind this project is that heatmaps can be created from this data to
 provide a visual representation of issues that pertain to a location being posted 
 by citizen journalism. Dynamic map based data visualization of citizen journalism.
 
+Please do well to check the attached LICENSE file. Thanl you.
+
 Current features:
 ================
 -submission of blog posts with its location
