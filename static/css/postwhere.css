@@ -1,0 +1,90 @@
+body {
+    text-align: center;
+    min-width: 850px;
+    font-family: arial;
+}
+div.wrapper { 
+    margin:0 auto;
+    width:850px;
+    text-align: left;
+}
+div.map { 
+    border: 2px solid #c3d9ff;
+    width: 500px;
+    height: 400px;
+    float:left;
+}
+div.list { 
+    border: 2px solid #c3d9ff;
+    width: 300px;
+    max-width: 300px;
+    height: 400px;
+    float:right;
+    margin-left:25px;
+    overflow: auto;
+}
+div.list div { 
+    padding: 2px;
+    float: none;
+    cursor: pointer;
+}
+div.list div.item { 
+    border-bottom: 1px solid #aaa;
+    padding:5px;
+}
+
+div.list div span.remove, .open {
+    font-family: arial;
+    /*float: right;*/
+    margin-top: 0px;
+    margin-right: 2px;
+    font-size: 11px;
+    padding: 3px;
+    background: #ddd url("/static/img/button-background.gif") repeat-x 0 0;
+    border: 1px solid #aaa;
+}
+div.list div.selection { 
+    background-color: #e6e6e6;
+    padding: 5px;
+}
+div.top { 
+    padding: 2px;
+    clear: both;
+    height: 30px;
+}
+div.top form.left, .left {
+    float: left;
+}
+div.top form.right, .right {
+    float: right;
+}
+
+div.body { 
+    clear: left;
+    width: 550px;
+    display: block;
+    text-align: right;
+}
+div.body table { 
+    margin-left: auto;
+}
+div.header {
+    width:840px;
+}
+div.login {
+    float:right;
+    margin-top:-50px;
+    font-size: 12px;
+}
+
+div.blogloc{
+    clear: both;
+    font-size: 11px;
+    font-style: italic;
+}
+
+#footer{
+    font-size: 12px;
+    text-align: center;
+    clear: both;
+}

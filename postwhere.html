@@ -1,0 +1,239 @@
+<html>
+    <head>
+        <title>Post Where | Showing you which location the blog post was about.</title>
+        <link href="/static/css/postwhere.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body>
+        <div class="wrapper" id="wrapper">
+            <div class="header" class="header"><h1 title="Showing you which location the blog post was about.">Post Where</h1>
+                <div class="login">
+                    {% if current_user %}
+                    <b>{{ current_user|escape }}</b> | <a href="{{ logout_url }}">Sign Out</a>
+                    {% else %}
+                    <a href="{{ login_url }}">Sign In</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="body" id="body">
+                {% if current_user %}
+                <form name=addr
+                      onSubmit="GeocodeAddLocation(this.title.value, this.url.value, this.address.value); this.reset(); return false;">
+                    <table>
+                        <tr><td align=right nowrap>Blog Title: <td colspan=3><input type=text name=title size=40/></td></tr>
+                        <tr><td align=right nowrap>URL: <td colspan=3><input type=text name=url size=40/></td></tr>
+                        <tr><td align=right nowrap>Location: </td><td colspan=2><input type=text name=address size=40/></td>
+                            <td><input type=submit value="Add" /></td></tr>
+                    </table>
+                </form>
+                {% else %}
+                Please <a href="{{ login_url }}">sign in</a> to add a new blog post location.
+                {% endif %}
+            </div>
+            <div class="map" id="map"> </div>
+            <div class="list" id="list"> </div>
+            <div class="top">
+                <form class="left" onSubmit="return false;">
+                    <input type=submit value="Update Display"
+                           onClick="server.GetLocations(server.display_user, DisplayLocations);"/>
+                </form>
+            </div>
+            <div id="footer">
+                Post Where &copy; 2010 By <b>Kwamena Appiah-Kubi</b> &amp; <b>Teresa Lemair</b> for the Ghana GTUG programming competetion
+            </div>
+        </div> <!-- End Wrapper -->
+        <script language="javascript" src="/static/json.js"> </script>
+        <script language="javascript" src="/static/client.js"> </script>
+        <script language="javascript" src="/static/geocode.js"> </script>
+
+        <!-- The key for the Google Maps API will work only for http://localhost:8080.
+             To retrieve a new key go to http://code.google.com/apis/maps/signup.html-->
+        <script type="text/javascript" src="http://maps.google.com/maps?file=js&amp;v=2&amp;sensor=false&amp;key=ABQIAAAAc3MKnNdV5YwSzft5LDJRxRRlOb26qSyU154aZeLwOrF4C7-DphSmmAtIP7xdZ0bXxA5vLKOggNt7JQ"></script>
+        <script language="javascript" src="/static/MochiKit/MochiKit.js"> </script>
+
+        <script>
+
+            server = { user: "{% if current_user %}{{ current_user.nickname }}{% endif %}",
+                display_user: "{% if display_user %}{{ display_user.nickname }}{% endif %}",
+                login_url: "{{ login_url }}" };
+            function InstallFunction(name) {
+                server[name] = function() { AE_CallRemote(name, arguments); }
+            }
+            InstallFunction("AddLocation");
+            InstallFunction("GetLocations");
+            InstallFunction("RemoveLocation");
+
+        </script>
+        <script language="javascript">
+            //<![CDATA[
+
+            // Set up the map
+            var map = new GMap(document.getElementById("map"));
+            map.addControl(new GLargeMapControl());
+            // Set up globals
+            
+            var geocoder = new GClientGeocoder();
+            var clickMarker = null;
+            var selectionMarker = null;
+            var list = document.getElementById('list');
+            list.selection = null;
+            list.deselect = function() {
+                if (this.selection)
+                    this.selection.elem.className = "item";
+                this.selection = null;
+            }
+            // Reset the display
+            initialized = false;
+            server.GetLocations(server.display_user, DisplayLocations);
+
+            // Location class
+            function Location(parent, map, obj) {
+                this.longd = obj['longd'];
+                this.latd = obj['latd'];
+                this.title = obj['title'];
+                this.url = obj['url'];
+                this.key = obj['key'];
+                this.address = obj['address'];
+                this.map = map;
+                this.point = new GPoint(this.longd, this.latd);
+                this.marker = new GMarker(this.point);
+                this.marker.loc = this;
+								this.showdata = "<b>" + this.title + "</b> <br />" + this.address + "<br /> <a href='"+ this.url +"''>open...</a>";
+								
+                this.parent = parent;
+
+                this.elem = document.createElement('div');
+                this.elem.className = "item";
+                this.elem.setAttribute('onclick', "this.loc.click();");
+                this.elem.innerHTML = this.title;
+
+
+								this.blogloc = document.createElement('div');
+                this.blogloc.className = "blogloc";
+                this.blogloc.innerHTML = this.address;
+                this.elem.appendChild(this.blogloc);
+                
+                this.opendiv = SPAN({ 'class' : 'open', 'onclick' : "window.open('"+ this.url +"', '_blank')"},'Open');
+                
+                this.opdel = document.createElement('div');
+                
+                {% if current_user %}
+                if (server.display_user == server.user){
+                    this.deldiv = SPAN({ 'class' : 'remove', 'onclick' : "this.parentNode.loc.remove();"},'Delete');
+                    //replaceChildNodes(this.elem, this.deldiv, this.title);
+                    this.opdel.appendChild(this.deldiv)
+                }
+                {% endif %}
+
+                this.opdel.appendChild(this.opendiv);
+								this.elem.appendChild(this.opdel);
+             
+                this.elem.loc = this;
+            }
+
+            Location.prototype.display = function() {
+                this.map.centerAtLatLng(this.point);
+                this.map.addOverlay(this.marker);
+                appendChildNodes(this.parent, this.elem);
+                if (!initialized) {
+                    this.map.zoomTo(4);
+                    initialized = true;
+                }
+            };
+
+            Location.prototype.remove = function() {
+                var confirmdel = confirm('Delete this Mapped Blogpost?');
+                if(confirmdel){
+                    var self = this;
+                    function removeFromList() {
+                        self.parent.removeChild(self.elem);
+                        if (self.parent.selection == self)
+                            self.parent.deselect();
+                        self.map.removeOverlay(self.marker);
+                    }
+                    server.RemoveLocation(
+                    this.key,
+                    removeFromList);
+                }
+            };
+
+            Location.prototype.select = function() {
+                this.parent.deselect();
+                this.elem.className = "selection";
+                this.parent.selection = this;
+            };
+
+            Location.prototype.click = function() {
+                this.map.recenterOrPanToLatLng(this.point);
+                GEvent.trigger(this.marker, "click");
+                if (this.parent.selection == this)
+                    this.parent.deselect();
+                else
+                    this.select();
+            };
+
+            // Add a listner for the map to add new locations
+            GEvent.addListener(map, 'click', function(overlay, point) {
+                list.deselect();
+                if (overlay && overlay.loc) {
+                    overlay.loc.select();
+                    overlay.openInfoWindowHtml(overlay.loc.showdata);
+                }
+                else if (point) {
+                    var form = document.forms['latlong'];
+                    form.longd.value = point.x;
+                    form.latd.value = point.y;
+                    if (clickMarker != null)
+                        map.removeOverlay(clickMarker);
+                    clickMarker = new GMarker(point);
+                    map.addOverlay(clickMarker);
+                }
+            });
+
+            // Add a single location, and display it
+            function AddDisplayLocation(latd, longd, title, url, address) {
+                if (!server.user)
+                    document.location = server.login_url
+                server.AddLocation(latd, longd, title, url, address,
+                function(obj) {
+                    if (server.display_user != server.user) {
+                        document.forms['user'].user.value = server.user;
+                        document.forms['user'].submit();
+                    } else {
+                        var loc = new Location(list, map, obj);
+                        loc.display();
+                        loc.select();
+                    }
+                });
+            }
+
+            // Display all locations
+            function DisplayLocations(locs) {
+                map.clearOverlays();
+                list.deselect();
+                replaceChildNodes(list);
+
+                for (var i = 0; i < locs.length; ++i) {
+                    var loc = new Location(list, map, locs[i]);
+                    loc.display();
+                }
+
+                // If no locations, display default location
+                if (locs.length == 0) {
+                    map.centerAndZoom(new GPoint(-0.160, 5.508), 13);
+                    return;
+                }
+            };
+
+            // Call Geocode RPC, and display resulting location
+            function GeocodeAddLocation(title, url, address) {
+                geocoder.getLocations(address,
+                function(r) { var lat = r.Placemark[0].Point.coordinates[1];
+                    var lng = r.Placemark[0].Point.coordinates[0];
+                    AddDisplayLocation(lat, lng, title, url, address);
+                });
+            }
+
+            //]]>
+        </script>
+    </body>
+</html>

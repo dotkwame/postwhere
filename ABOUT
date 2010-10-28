@@ -1,0 +1,23 @@
+Post Where
+===========
+Blog Mapper is a prototype google app engine application for mapping blog posts.
+It serves to plot location for which a blogpost was written. 
+It currently supports only one location per post but future iterations can include 
+mapping several locations (like tags) to a post.
+
+The idea behind this project is that heatmaps can be created from this data to 
+provide a visual representation of issues that pertain to a location being posted 
+by citizen journalism. Dynamic map based data visualization of citizen journalism.
+
+Current features:
+================
+-submission of blog posts with its location
+-listing of all submitted posts when not logged
+-listing of only submitted posts of logged in user
+-posting limited to logged in users
+-info window displays when list item is clicked
+-info window displays when marker is clicked
+
+
+
+
